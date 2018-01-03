@@ -4,9 +4,11 @@
 """
 import os
 import sys
+import io
 import json
 import re
 
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 def open_accordant_config():
     """

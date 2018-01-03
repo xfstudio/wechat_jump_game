@@ -5,7 +5,9 @@
 import os
 import sys
 import shutil
+import math
 from PIL import ImageDraw
+from common import ai
 
 screenshot_backup_dir = 'screenshot_backups/'
 
@@ -26,9 +28,10 @@ def backup_screenshot(ts):
     shutil.copy('autojump.png', '{}{}.png'.format(screenshot_backup_dir, ts))
 
 
-def save_debug_screenshot(ts, im, piece_x, piece_y, board_x, board_y):
+def save_debug_screenshot(ts, im, piece_x, piece_y, board_x, board_y, debugtype = 'auto'):
     """
     对 debug 图片加上详细的注释
+    
     """
     make_debug_dir(screenshot_backup_dir)
     draw = ImageDraw.Draw(im)
@@ -40,29 +43,39 @@ def save_debug_screenshot(ts, im, piece_x, piece_y, board_x, board_y):
     draw.ellipse((piece_x - 10, piece_y - 10, piece_x + 10, piece_y + 10), fill=(255, 0, 0))
     draw.ellipse((board_x - 10, board_y - 10, board_x + 10, board_y + 10), fill=(0, 0, 255))
     del draw
-    im.save('{}{}_d.png'.format(screenshot_backup_dir, ts))
+    im.save('{}{}_{}.png'.format(screenshot_backup_dir, ts, debugtype))
 
+def computing_error(last_press_time, target_board_x, target_board_y, last_piece_x, last_piece_y, temp_piece_x, temp_piece_y):
+    '''
+    计算跳跃实际误差
+    '''
+    target_distance = math.sqrt((target_board_x - last_piece_x) ** 2 + (target_board_y - last_piece_y) ** 2)  # 上一轮目标跳跃距离
+    actual_distance = math.sqrt((temp_piece_x - last_piece_x) ** 2 + (temp_piece_y - last_piece_y) ** 2)  # 上一轮实际跳跃距离
+    jump_error_value = math.sqrt((target_board_x - temp_piece_x) ** 2 + (target_board_y - temp_piece_y) ** 2)  # 跳跃误差
+
+    print(round(target_distance), round(jump_error_value), round(actual_distance), round(last_press_time))
+    # 将结果采集进学习字典
+    if last_piece_x > 0 and last_press_time > 0:
+        ai.add_data(round(actual_distance, 2), round(last_press_time))
+        # print(round(actual_distance), round(last_press_time))
 
 def dump_device_info():
     """
     显示设备信息
     """
     size_str = os.popen('adb shell wm size').read()
-    device_str = os.popen('adb shell getprop ro.product.device').read()
-    phone_os_str = os.popen('adb shell getprop ro.build.version.release').read()
+    device_str = os.popen('adb shell getprop ro.product.model').read()
     density_str = os.popen('adb shell wm density').read()
     print("""**********
 Screen: {size}
 Density: {dpi}
-Device: {device}
-Phone OS: {phone_os}
-Host OS: {host_os}
+DeviceType: {type}
+OS: {os}
 Python: {python}
 **********""".format(
         size=size_str.strip(),
+        type=device_str.strip(),
         dpi=density_str.strip(),
-        device=device_str.strip(),
-        phone_os=phone_os_str.strip(),
-        host_os=sys.platform,
+        os=sys.platform,
         python=sys.version
     ))
