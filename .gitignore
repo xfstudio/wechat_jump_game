@@ -4,6 +4,10 @@ pic/
 screenshot_backups/
 autojump.png
 
+# ai jumper
+autojump_temp.png
+jump_range.csv
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
