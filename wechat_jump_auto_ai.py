@@ -35,6 +35,8 @@ from common import debug, config, ai
 
 VERSION = "1.1.1"
 
+SCREENSHOT_FILENAME = "autojump.png"
+SCREENSHOT_FILENAME_TEMP = "autojump_temp.png"
 
 debug_switch = True    # debug 开关，需要调试的时候请改为：True
 config = config.open_accordant_config()
@@ -44,28 +46,6 @@ under_game_score_y = config['under_game_score_y']
 press_coefficient = config['press_coefficient']       # 长按的时间系数，请自己根据实际情况调节
 piece_base_height_1_2 = config['piece_base_height_1_2']   # 二分之一的棋子底座高度，可能要调节
 piece_body_width = config['piece_body_width']             # 棋子的宽度，比截图中量到的稍微大一点比较安全，可能要调节
-
-
-screenshot_way = 2
-
-
-def pull_screenshot():
-    process = subprocess.Popen('adb shell screencap -p', shell=True, stdout=subprocess.PIPE)
-    screenshot = process.stdout.read()
-    if sys.platform == 'win32':
-        screenshot = screenshot.replace(b'\r\n', b'\n')
-    f = open('autojump.png', 'wb')
-    f.write(screenshot)
-    f.close()
-
-def pull_screenshot_temp():
-    process = subprocess.Popen('adb shell screencap -p', shell=True, stdout=subprocess.PIPE)
-    screenshot = process.stdout.read()
-    if sys.platform == 'win32':
-        screenshot = screenshot.replace(b'\r\n', b'\n')
-    f = open('autojump_temp.png', 'wb')
-    f.write(screenshot)
-    f.close()
 
 def set_button_position(im):
     '''
@@ -329,25 +309,6 @@ def find_piece_and_board(im):
     return piece_x, piece_y, board_x, new_board_y
 
 
-def check_screenshot():
-    '''
-    检查获取截图的方式
-    '''
-    global screenshot_way
-    if os.path.isfile('autojump.png'):
-        os.remove('autojump.png')
-    if (screenshot_way < 0):
-        print('暂不支持当前设备')
-        sys.exit()
-    pull_screenshot()
-    try:
-        Image.open('./autojump.png').load()
-        print('采用方式 {} 获取截图'.format(screenshot_way))
-    except Exception:
-        screenshot_way -= 1
-        check_screenshot()
-
-
 def yes_or_no(prompt, true_value='y', false_value='n', default=True):
     default_value = true_value if default else false_value
     prompt = '%s %s/%s [%s]: ' % (prompt, true_value, false_value, default_value)
@@ -376,12 +337,12 @@ def main():
 
     print('程序版本号：{}'.format(VERSION))
     debug.dump_device_info()
-    check_screenshot()
 
     i, next_rest, next_rest_time = 0, random.randrange(3, 10), random.randrange(5, 10)
     while True:
-        pull_screenshot()
-        im = Image.open('./autojump.png')
+        # pull_screenshot()
+        check_screenshot(SCREENSHOT_FILENAME)
+        im = Image.open(SCREENSHOT_FILENAME)
         # 获取棋子和 board 的位置
         piece_x, piece_y, board_x, board_y = find_piece_and_board(im)
         ts = int(time.time())
@@ -391,8 +352,8 @@ def main():
 
         # 在跳跃落下的瞬间 摄像机移动前截图 这个参数要自己校调
         time.sleep(0.2)
-        pull_screenshot_temp()
-        im_temp = Image.open('./autojump_temp.png')
+        check_screenshot(SCREENSHOT_FILENAME_TEMP)
+        im_temp = Image.open(SCREENSHOT_FILENAME_TEMP)
         temp_piece_x, temp_piece_y = find_piece(im_temp)
         debug.computing_error(press_time, board_x, board_y, piece_x, piece_y, temp_piece_x, temp_piece_y)
 

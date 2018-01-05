@@ -12,7 +12,7 @@ from PIL import Image
 SCREENSHOT_WAY = 3
 
 
-def pull_screenshot():
+def pull_screenshot(filename = 'autojump.png'):
     """
     获取屏幕截图，目前有 0 1 2 3 四种方法，未来添加新的平台监测方法时，
     可根据效率及适用性由高到低排序
@@ -27,27 +27,36 @@ def pull_screenshot():
             binary_screenshot = binary_screenshot.replace(b'\r\n', b'\n')
         elif SCREENSHOT_WAY == 1:
             binary_screenshot = binary_screenshot.replace(b'\r\r\n', b'\n')
-        f = open('autojump.png', 'wb')
+        f = open(filename, 'wb')
         f.write(binary_screenshot)
         f.close()
     elif SCREENSHOT_WAY == 0:
-        os.system('adb shell screencap -p /sdcard/autojump.png')
-        os.system('adb pull /sdcard/autojump.png .')
+        try:
+            os.system('adb exec-out screencap -p > ' + filename)
+        except Exception as e:
+            try:
+                os.system('adb shell screencap -p /sdcard/' + filename)
+                os.system('adb pull /sdcard/' + filename + ' .')
+            except Exception as e:
+                raise e
 
 
-def check_screenshot():
+def check_screenshot(filename = 'autojump.png'):
     """
     检查获取截图的方式
     """
     global SCREENSHOT_WAY
-    if os.path.isfile('autojump.png'):
-        os.remove('autojump.png')
+    try:
+        if os.path.isfile(filename):
+            os.remove(filename)
+    except Exception as e:
+        pass
     if SCREENSHOT_WAY < 0:
         print('暂不支持当前设备')
         sys.exit()
-    pull_screenshot()
+    pull_screenshot(filename)
     try:
-        Image.open('./autojump.png').load()
+        Image.open(filename).load()
         print('采用方式 {} 获取截图'.format(SCREENSHOT_WAY))
     except Exception:
         SCREENSHOT_WAY -= 1
