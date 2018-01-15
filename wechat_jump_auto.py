@@ -77,7 +77,7 @@ def jump(distance):
         y2=swipe_y2,
         duration=press_time
     )
-    print(cmd)
+    # print(cmd)
     os.system(cmd)
     return press_time
 
@@ -244,7 +244,7 @@ def main():
             i, next_rest, next_rest_time = (0, random.randrange(30, 100),
                                             random.randrange(10, 60))
         # 为了保证截图的时候应落稳了，多延迟一会儿，随机值防 ban
-        time.sleep(random.uniform(0.9, 1.2))
+        time.sleep(random.uniform(1.8, 2.4))
 
 
 if __name__ == '__main__':
